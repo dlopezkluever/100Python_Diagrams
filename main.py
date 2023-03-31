@@ -1,47 +1,78 @@
-from turtle import Screen, Turtle
-from paddle import Paddle
-from ball import Ball
-from scoreboard import Scoreboard
+from turtle import Turtle, Screen
 import time
-
+from pong import Ball, Paddle
+from scoreboard import Score1, Score2
+from random import randint, choice
+# Screen Set Up
 screen = Screen()
+screen.screensize(800, 600)
+screen.setup(800, 600)
 screen.bgcolor("black")
-screen.setup(width=800, height=600)
-screen.title("Pong")
+screen.title("Pong!")
+screen.listen()
 screen.tracer(0)
 
-r_paddle = Paddle((350, 0))
-l_paddle = Paddle((-350, 0))
+ral = 0.01
+
+line = Turtle()
+line.color("white")
+line.shape("square")
+line.shapesize(stretch_wid=200, stretch_len=.1)
+
+paddle_1 = Paddle()
+paddle_2 = Paddle()
+paddle_1.setpos(355, 0)
+paddle_2.setpos(-365, 0)
+
+
+screen.onkeypress(key="Up", fun=paddle_1.up)
+screen.onkeypress(key="Down", fun=paddle_1.down)
+screen.onkeypress(key="w", fun=paddle_2.up)
+screen.onkeypress(key="s", fun=paddle_2.down)
+
+score_1 = Score1()
+score_2 = Score2()
+alive = True
 ball = Ball()
-scoreboard = Scoreboard()
 
-screen.listen()
-screen.onkey(r_paddle.go_up, "Up")
-screen.onkey(r_paddle.go_down, "Down")
-screen.onkey(l_paddle.go_up, "w")
-screen.onkey(l_paddle.go_down, "s")
 
-game_is_on = True
-while game_is_on:
+def game():
     screen.update()
-    ball.move()
+    ball.forward(5)
+    global ral
+    time.sleep(ral)
+    ball.bounce()
+    if 360 >= ball.xcor() >= 350:
+        if ball.distance(paddle_1) <= 50:
+            ball.setheading(randint(110, 250))
+            ral *= 0.84
+        pass
 
-    #Detect collision with wall
-    if ball.ycor() > 280 or ball.ycor() < -280:
-        ball.bounce_y()
+    if ball.xcor() >= 390:
+        score_2.update()
+        ball.setpos(0, 0)
+        r = choice([(55, 75), (105, 135), (235, 255), (285, 305)])
+        ball.setheading(randint(*r))
+        ral = 0.01
 
-    #Detect collision with paddle
-    if ball.distance(r_paddle) < 50 and ball.xcor() > 320 or ball.distance(l_paddle) < 50 and ball.xcor() < -320:
-        ball.bounce_x()
+    if -370 <= ball.xcor() <= -360:
+        if ball.distance(paddle_2) <= 50:
+            r = choice([(290, 359), (0, 70)])
+            ball.setheading(randint(*r))
+            ral *= 0.84
+        pass
 
-    #Detect R paddle misses
-    if ball.xcor() > 380:
-        ball.reset_position()
-        scoreboard.l_point()
+    if ball.xcor() <= -390:
+        score_1.update()
+        ball.setpos(0, 0)
+        r = choice([(55, 75), (105, 135), (235, 255), (285, 305)])
+        ball.setheading(randint(*r))
+        ral = 0.01
 
-    #Detect L paddle misses:
-    if ball.xcor() < -380:
-        ball.reset_position()
-        scoreboard.r_point()
+
+while alive:
+    if score_2.score == 12 or score_1.score == 12:
+        alive = False
+    game()
 
 screen.exitonclick()
